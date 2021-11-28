@@ -1,0 +1,900 @@
+[
+    {
+        "id": "09217e3758bbf1dc",
+        "type": "tab",
+        "label": "Spinitron",
+        "disabled": false,
+        "info": "[Spinitron.com](https://spinitron.com/), is a service of Spinitron, LLC.  The service provides playlist entry and management for aural transmissions.\n\nThis Node-RED flow accepts input from a station's Spinitron.com **metadata push channel** whenever a change in the content of the aural stream occurs and returns spin, show, & station data in real time.\n\nThe Spintron.com Metadata push channel should be configured for HTTP POST with the following template: `POST https://%un%:%pw%@<this-server-url>/<http-in-node>?now=%now%&message_count=%ct%&message_valid_duration=%rdur%&spin_id=%si%&spin_time=%sp%&spin_duration_seconds=%sd%&spin_note=%se%&artist=%an%&title=%sn%&composer=%sc%&new=%ne%&request=%rq%&album_title=%dn%&format=%df%&year=%dr%&coverart_url=%ua%&genre=%dl%&local=%lo%&label=%ln%&station_title=%st%&host=%dj%&show_id=%wi%&playlist=%wn%&playlist_id=%pi%&playlist_category=%wc%&playlist_since_year=%ws%&playlist_description=%wd%&playlist_start=%wo%&playlist_end=%wf%&show_weekdays=%ww%&spin_url=%tsp%&host_url=%tdj%&show_url=%tsh%&station_url=%tst%`\nInput triggers the following ouput:\n * If an entered spin is not expired\n -  * Spin data output\n -  * Timer started until expiration\n * If the spin is expired, but program is not\n -  * Playlist / show data output\n -  * Timer started until program expiration\n * If the spin and program are expired\n -  * Station data output",
+        "env": []
+    },
+    {
+        "id": "046a11b894401fbb",
+        "type": "link in",
+        "z": "09217e3758bbf1dc",
+        "name": "spin reformat",
+        "links": [
+            "2a07e4d0cdb4d8d5"
+        ],
+        "x": 75,
+        "y": 220,
+        "wires": [
+            [
+                "0c5f695dce227078"
+            ]
+        ]
+    },
+    {
+        "id": "396dfd7b45b00e94",
+        "type": "change",
+        "z": "09217e3758bbf1dc",
+        "name": "Spinitron reformat",
+        "rules": [
+            {
+                "t": "set",
+                "p": "topic",
+                "pt": "msg",
+                "to": "spin",
+                "tot": "str"
+            },
+            {
+                "t": "set",
+                "p": "timestamp",
+                "pt": "msg",
+                "to": "",
+                "tot": "date"
+            },
+            {
+                "t": "set",
+                "p": "count",
+                "pt": "msg",
+                "to": "$number(payload.message_count)",
+                "tot": "jsonata"
+            },
+            {
+                "t": "set",
+                "p": "spin.id",
+                "pt": "msg",
+                "to": "$number(payload.spin_id)",
+                "tot": "jsonata"
+            },
+            {
+                "t": "set",
+                "p": "spin.start",
+                "pt": "msg",
+                "to": "$number($moment(payload.spin_time).format('x'))",
+                "tot": "jsonata"
+            },
+            {
+                "t": "set",
+                "p": "spin.entered",
+                "pt": "msg",
+                "to": "$number($moment(payload.now).format(\"x\"))",
+                "tot": "jsonata"
+            },
+            {
+                "t": "set",
+                "p": "spin.remaining",
+                "pt": "msg",
+                "to": "$number(payload.message_valid_duration)*1000",
+                "tot": "jsonata"
+            },
+            {
+                "t": "set",
+                "p": "spin.end",
+                "pt": "msg",
+                "to": "$sum([$number($moment(payload.now).format('x')),spin.remaining])",
+                "tot": "jsonata"
+            },
+            {
+                "t": "set",
+                "p": "spin.duration",
+                "pt": "msg",
+                "to": "payload.spin_duration_seconds",
+                "tot": "msg"
+            },
+            {
+                "t": "set",
+                "p": "spin.title",
+                "pt": "msg",
+                "to": "payload.title",
+                "tot": "msg"
+            },
+            {
+                "t": "set",
+                "p": "spin.artist",
+                "pt": "msg",
+                "to": "payload.artist",
+                "tot": "msg"
+            },
+            {
+                "t": "set",
+                "p": "spin.album.title",
+                "pt": "msg",
+                "to": "payload.album_title",
+                "tot": "msg"
+            },
+            {
+                "t": "set",
+                "p": "spin.album.coverart_url",
+                "pt": "msg",
+                "to": "payload.coverart_url",
+                "tot": "msg"
+            },
+            {
+                "t": "set",
+                "p": "spin.album.format",
+                "pt": "msg",
+                "to": "payload.format",
+                "tot": "msg"
+            },
+            {
+                "t": "set",
+                "p": "spin.album.year",
+                "pt": "msg",
+                "to": "payload.year",
+                "tot": "msg"
+            },
+            {
+                "t": "set",
+                "p": "spin.album.label",
+                "pt": "msg",
+                "to": "payload.label",
+                "tot": "msg"
+            },
+            {
+                "t": "set",
+                "p": "spin.composer",
+                "pt": "msg",
+                "to": "payload.composer",
+                "tot": "msg"
+            },
+            {
+                "t": "set",
+                "p": "spin.new",
+                "pt": "msg",
+                "to": "$boolean($number(payload.new))",
+                "tot": "jsonata"
+            },
+            {
+                "t": "set",
+                "p": "spin.request",
+                "pt": "msg",
+                "to": "$boolean($number(payload.request))",
+                "tot": "jsonata"
+            },
+            {
+                "t": "set",
+                "p": "spin.local",
+                "pt": "msg",
+                "to": "$boolean($number(payload.local))",
+                "tot": "jsonata"
+            },
+            {
+                "t": "set",
+                "p": "spin.url",
+                "pt": "msg",
+                "to": "payload.spin_url",
+                "tot": "msg"
+            },
+            {
+                "t": "set",
+                "p": "spin.note",
+                "pt": "msg",
+                "to": "payload.spin_note",
+                "tot": "msg"
+            },
+            {
+                "t": "set",
+                "p": "playlist.id",
+                "pt": "msg",
+                "to": "$number(payload.playlist_id)\t",
+                "tot": "jsonata"
+            },
+            {
+                "t": "set",
+                "p": "playlist.start",
+                "pt": "msg",
+                "to": "$number($moment(payload.playlist_start, \"h:mm:ss\").format(\"x\"))",
+                "tot": "jsonata"
+            },
+            {
+                "t": "set",
+                "p": "playlist.end",
+                "pt": "msg",
+                "to": "$number($moment(payload.playlist_end, \"h:mm:ss\").format(\"x\"))",
+                "tot": "jsonata"
+            },
+            {
+                "t": "set",
+                "p": "playlist.title",
+                "pt": "msg",
+                "to": "payload.playlist",
+                "tot": "msg"
+            },
+            {
+                "t": "set",
+                "p": "playlist.description",
+                "pt": "msg",
+                "to": "payload.playlist_description",
+                "tot": "msg"
+            },
+            {
+                "t": "set",
+                "p": "playlist.category",
+                "pt": "msg",
+                "to": "payload.playlist_category",
+                "tot": "msg"
+            },
+            {
+                "t": "set",
+                "p": "playlist.host.name",
+                "pt": "msg",
+                "to": "payload.host",
+                "tot": "msg"
+            },
+            {
+                "t": "set",
+                "p": "playlist.host.url",
+                "pt": "msg",
+                "to": "payload.host_url",
+                "tot": "msg"
+            },
+            {
+                "t": "set",
+                "p": "playlist.show.id",
+                "pt": "msg",
+                "to": "$number(payload.show_id)",
+                "tot": "jsonata"
+            },
+            {
+                "t": "set",
+                "p": "playlist.show.url",
+                "pt": "msg",
+                "to": "payload.show_url",
+                "tot": "msg"
+            },
+            {
+                "t": "set",
+                "p": "playlist.host.since_year",
+                "pt": "msg",
+                "to": "payload.playlist_since_year",
+                "tot": "msg"
+            },
+            {
+                "t": "set",
+                "p": "playlist.show.start",
+                "pt": "msg",
+                "to": "$moment(payload.playlist_start, \"h:mm:ss\").format('LT')",
+                "tot": "jsonata"
+            },
+            {
+                "t": "set",
+                "p": "playlist.show.end",
+                "pt": "msg",
+                "to": "$moment(payload.playlist_end, \"h:mm:ss\").format('LT')",
+                "tot": "jsonata"
+            },
+            {
+                "t": "set",
+                "p": "playlist.show.weekdays",
+                "pt": "msg",
+                "to": "payload.show_weekdays",
+                "tot": "msg"
+            },
+            {
+                "t": "set",
+                "p": "station.title",
+                "pt": "msg",
+                "to": "payload.station_title",
+                "tot": "msg"
+            },
+            {
+                "t": "set",
+                "p": "station.url",
+                "pt": "msg",
+                "to": "payload.station_url",
+                "tot": "msg"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 470,
+        "y": 200,
+        "wires": [
+            [
+                "4dd7579007ee05aa"
+            ]
+        ]
+    },
+    {
+        "id": "5888762d114b8d55",
+        "type": "inject",
+        "z": "09217e3758bbf1dc",
+        "name": "RESEND",
+        "props": [
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "RESEND",
+        "x": 120,
+        "y": 180,
+        "wires": [
+            [
+                "076a0b4f54c06df6"
+            ]
+        ]
+    },
+    {
+        "id": "0c5f695dce227078",
+        "type": "change",
+        "z": "09217e3758bbf1dc",
+        "name": "cache",
+        "rules": [
+            {
+                "t": "delete",
+                "p": "res",
+                "pt": "msg"
+            },
+            {
+                "t": "delete",
+                "p": "req",
+                "pt": "msg"
+            },
+            {
+                "t": "set",
+                "p": "spin",
+                "pt": "flow",
+                "to": "payload",
+                "tot": "msg"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 290,
+        "y": 220,
+        "wires": [
+            [
+                "396dfd7b45b00e94"
+            ]
+        ]
+    },
+    {
+        "id": "076a0b4f54c06df6",
+        "type": "change",
+        "z": "09217e3758bbf1dc",
+        "name": "resend",
+        "rules": [
+            {
+                "t": "set",
+                "p": "payload",
+                "pt": "msg",
+                "to": "spin",
+                "tot": "flow"
+            },
+            {
+                "t": "set",
+                "p": "topic",
+                "pt": "msg",
+                "to": "RESEND",
+                "tot": "str"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 290,
+        "y": 180,
+        "wires": [
+            [
+                "396dfd7b45b00e94"
+            ]
+        ]
+    },
+    {
+        "id": "4dd7579007ee05aa",
+        "type": "link out",
+        "z": "09217e3758bbf1dc",
+        "name": "spin reformat",
+        "mode": "link",
+        "links": [
+            "22fddd82895cbadf"
+        ],
+        "x": 655,
+        "y": 200,
+        "wires": []
+    },
+    {
+        "id": "22fddd82895cbadf",
+        "type": "link in",
+        "z": "09217e3758bbf1dc",
+        "name": "spin timing",
+        "links": [
+            "4dd7579007ee05aa",
+            "6e10ba155193b5ab"
+        ],
+        "x": 75,
+        "y": 300,
+        "wires": [
+            [
+                "bdc0f9ac6bfe802e"
+            ]
+        ]
+    },
+    {
+        "id": "615fc399ad2c4504",
+        "type": "function",
+        "z": "09217e3758bbf1dc",
+        "name": "metadata selector",
+        "func": "if(msg.timestamp > msg.spin.start && msg.timestamp < msg.spin.end) {\n    msg.topic=\"spin\"\n    msg.payload=msg.spin\n    msg.delay=msg.spin.end-msg.timestamp\n    delete msg.reset\n    node.status({fill:\"green\",shape:\"dot\",text:msg.payload.title + ' by ' + msg.payload.artist});\n  }\n  else if(msg.timestamp > msg.playlist.start && msg.timestamp < msg.playlist.end) {\n    msg.topic=\"playlist\"\n    msg.payload=msg.playlist\n    msg.delay=msg.playlist.end-msg.timestamp\n    delete msg.reset\n    delete msg.spin\n    node.status({fill:\"blue\",shape:\"dot\",text:msg.payload.title});\n  }\n  else {\n    msg.topic=\"station\"\n    msg.payload=msg.station\n    delete msg.delay\n    delete msg.reset\n    delete msg.spin\n    delete msg.playlist\n    node.status({fill:\"grey\",shape:\"dot\",text:msg.payload.title});\n  }\nreturn msg",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 330,
+        "y": 280,
+        "wires": [
+            [
+                "2cc8575af30673c8"
+            ]
+        ]
+    },
+    {
+        "id": "d33cf6d59b2d06bb",
+        "type": "link out",
+        "z": "09217e3758bbf1dc",
+        "name": "timed data selection",
+        "mode": "link",
+        "links": [
+            "988b9203abd5b8e3",
+            "ef1252ce2df2d8e9"
+        ],
+        "x": 655,
+        "y": 300,
+        "wires": []
+    },
+    {
+        "id": "5912695e37dfe19e",
+        "type": "trigger",
+        "z": "09217e3758bbf1dc",
+        "name": "",
+        "op1": "",
+        "op2": "",
+        "op1type": "pay",
+        "op2type": "pay",
+        "duration": "2",
+        "extend": false,
+        "overrideDelay": true,
+        "units": "s",
+        "reset": "",
+        "bytopic": "all",
+        "topic": "topic",
+        "outputs": 2,
+        "x": 400,
+        "y": 340,
+        "wires": [
+            [
+                "d33cf6d59b2d06bb"
+            ],
+            [
+                "6e10ba155193b5ab"
+            ]
+        ]
+    },
+    {
+        "id": "bdc0f9ac6bfe802e",
+        "type": "change",
+        "z": "09217e3758bbf1dc",
+        "name": "reset",
+        "rules": [
+            {
+                "t": "set",
+                "p": "timestamp",
+                "pt": "msg",
+                "to": "",
+                "tot": "date"
+            },
+            {
+                "t": "set",
+                "p": "reset",
+                "pt": "msg",
+                "to": "true",
+                "tot": "bool"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 170,
+        "y": 300,
+        "wires": [
+            [
+                "5912695e37dfe19e",
+                "615fc399ad2c4504"
+            ]
+        ]
+    },
+    {
+        "id": "2cc8575af30673c8",
+        "type": "switch",
+        "z": "09217e3758bbf1dc",
+        "name": "delay?",
+        "property": "delay",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "null"
+            },
+            {
+                "t": "else"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 2,
+        "x": 490,
+        "y": 280,
+        "wires": [
+            [
+                "d33cf6d59b2d06bb"
+            ],
+            [
+                "5912695e37dfe19e"
+            ]
+        ]
+    },
+    {
+        "id": "a934ac894687084a",
+        "type": "http in",
+        "z": "09217e3758bbf1dc",
+        "name": "/spin",
+        "url": "/spin",
+        "method": "post",
+        "upload": false,
+        "swaggerDoc": "",
+        "x": 110,
+        "y": 60,
+        "wires": [
+            [
+                "b6cfda2cf72e0edd",
+                "2a07e4d0cdb4d8d5"
+            ]
+        ]
+    },
+    {
+        "id": "2a07e4d0cdb4d8d5",
+        "type": "link out",
+        "z": "09217e3758bbf1dc",
+        "name": "spin-in",
+        "mode": "link",
+        "links": [
+            "046a11b894401fbb"
+        ],
+        "x": 655,
+        "y": 60,
+        "wires": []
+    },
+    {
+        "id": "b6cfda2cf72e0edd",
+        "type": "change",
+        "z": "09217e3758bbf1dc",
+        "name": "response",
+        "rules": [
+            {
+                "t": "set",
+                "p": "payload",
+                "pt": "msg",
+                "to": "Spin OK!",
+                "tot": "str"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 260,
+        "y": 100,
+        "wires": [
+            [
+                "5e4aa4853f9a5b36"
+            ]
+        ]
+    },
+    {
+        "id": "5e4aa4853f9a5b36",
+        "type": "http response",
+        "z": "09217e3758bbf1dc",
+        "name": "response",
+        "statusCode": "",
+        "headers": {},
+        "x": 460,
+        "y": 100,
+        "wires": []
+    },
+    {
+        "id": "fb979cbe68ad2787",
+        "type": "comment",
+        "z": "09217e3758bbf1dc",
+        "name": "Spinitron.com IN",
+        "info": "",
+        "x": 100,
+        "y": 20,
+        "wires": []
+    },
+    {
+        "id": "e85fe87ca918ba8b",
+        "type": "comment",
+        "z": "09217e3758bbf1dc",
+        "name": "spin reformat",
+        "info": "",
+        "x": 90,
+        "y": 140,
+        "wires": []
+    },
+    {
+        "id": "4f24b03d5ac347cd",
+        "type": "comment",
+        "z": "09217e3758bbf1dc",
+        "name": "timing & selection",
+        "info": "",
+        "x": 100,
+        "y": 260,
+        "wires": []
+    },
+    {
+        "id": "8ac0906600d877dc",
+        "type": "comment",
+        "z": "09217e3758bbf1dc",
+        "name": "metadata formats",
+        "info": "",
+        "x": 100,
+        "y": 400,
+        "wires": []
+    },
+    {
+        "id": "ef1252ce2df2d8e9",
+        "type": "link in",
+        "z": "09217e3758bbf1dc",
+        "name": "metadata format",
+        "links": [
+            "d33cf6d59b2d06bb"
+        ],
+        "x": 75,
+        "y": 460,
+        "wires": [
+            [
+                "b1ddaf1471092dfa"
+            ]
+        ]
+    },
+    {
+        "id": "f65d8ad553cbf19a",
+        "type": "link out",
+        "z": "09217e3758bbf1dc",
+        "name": "metadata",
+        "mode": "link",
+        "links": [
+            "1bf59a24ab18ec9c",
+            "80d1c097f6fc8634"
+        ],
+        "x": 655,
+        "y": 460,
+        "wires": []
+    },
+    {
+        "id": "b1ddaf1471092dfa",
+        "type": "switch",
+        "z": "09217e3758bbf1dc",
+        "name": "message sort",
+        "property": "topic",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "eq",
+                "v": "spin",
+                "vt": "str"
+            },
+            {
+                "t": "eq",
+                "v": "playlist",
+                "vt": "str"
+            },
+            {
+                "t": "else"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 3,
+        "x": 200,
+        "y": 460,
+        "wires": [
+            [
+                "dee33f8ee411c1d4"
+            ],
+            [
+                "b60c235b0e477bf8"
+            ],
+            [
+                "d64107b705019a42"
+            ]
+        ]
+    },
+    {
+        "id": "69e0af021cb35fc2",
+        "type": "template",
+        "z": "09217e3758bbf1dc",
+        "name": "spin text",
+        "field": "payload",
+        "fieldType": "msg",
+        "format": "handlebars",
+        "syntax": "mustache",
+        "template": "{{{payload.title}}} by {{{payload.artist}}}",
+        "output": "str",
+        "x": 540,
+        "y": 420,
+        "wires": [
+            [
+                "f65d8ad553cbf19a"
+            ]
+        ]
+    },
+    {
+        "id": "e2f9a4c23a64e72a",
+        "type": "template",
+        "z": "09217e3758bbf1dc",
+        "name": "playlist text",
+        "field": "payload",
+        "fieldType": "msg",
+        "format": "handlebars",
+        "syntax": "mustache",
+        "template": "{{{payload.title}}} with {{{payload.host.name}}}",
+        "output": "str",
+        "x": 530,
+        "y": 460,
+        "wires": [
+            [
+                "f65d8ad553cbf19a"
+            ]
+        ]
+    },
+    {
+        "id": "36e05020268fa539",
+        "type": "template",
+        "z": "09217e3758bbf1dc",
+        "name": "station text",
+        "field": "payload",
+        "fieldType": "msg",
+        "format": "handlebars",
+        "syntax": "mustache",
+        "template": "{{{payload.title}}}",
+        "output": "str",
+        "x": 530,
+        "y": 500,
+        "wires": [
+            [
+                "f65d8ad553cbf19a"
+            ]
+        ]
+    },
+    {
+        "id": "dee33f8ee411c1d4",
+        "type": "template",
+        "z": "09217e3758bbf1dc",
+        "name": "spin html",
+        "field": "html",
+        "fieldType": "msg",
+        "format": "handlebars",
+        "syntax": "mustache",
+        "template": "{{payload.title}} <em>by</em> {{payload.artist}}",
+        "output": "str",
+        "x": 360,
+        "y": 420,
+        "wires": [
+            [
+                "69e0af021cb35fc2"
+            ]
+        ]
+    },
+    {
+        "id": "b60c235b0e477bf8",
+        "type": "template",
+        "z": "09217e3758bbf1dc",
+        "name": "playlist html",
+        "field": "html",
+        "fieldType": "msg",
+        "format": "handlebars",
+        "syntax": "mustache",
+        "template": "<div>{{payload.title}} <em>with</em> <a href=\"{{{payload.host.url}}}\">{{payload.host.name}}</a></div>\n<div>{{payload.description}}</div>",
+        "output": "str",
+        "x": 370,
+        "y": 460,
+        "wires": [
+            [
+                "e2f9a4c23a64e72a"
+            ]
+        ]
+    },
+    {
+        "id": "d64107b705019a42",
+        "type": "template",
+        "z": "09217e3758bbf1dc",
+        "name": "station html",
+        "field": "html",
+        "fieldType": "msg",
+        "format": "handlebars",
+        "syntax": "mustache",
+        "template": "<a href=\"{{station.url}}\">{{station.title}}</a>",
+        "output": "str",
+        "x": 370,
+        "y": 500,
+        "wires": [
+            [
+                "36e05020268fa539"
+            ]
+        ]
+    },
+    {
+        "id": "80d1c097f6fc8634",
+        "type": "link in",
+        "z": "09217e3758bbf1dc",
+        "name": "spin display",
+        "links": [
+            "f65d8ad553cbf19a"
+        ],
+        "x": 235,
+        "y": 20,
+        "wires": [
+            [
+                "b143494c07503a61"
+            ]
+        ]
+    },
+    {
+        "id": "b143494c07503a61",
+        "type": "debug",
+        "z": "09217e3758bbf1dc",
+        "name": "[topic] payload",
+        "active": true,
+        "tosidebar": false,
+        "console": false,
+        "tostatus": true,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "\"[\" & topic & \"] \" & payload",
+        "statusType": "jsonata",
+        "x": 440,
+        "y": 20,
+        "wires": []
+    },
+    {
+        "id": "6e10ba155193b5ab",
+        "type": "link out",
+        "z": "09217e3758bbf1dc",
+        "name": "timing trigger",
+        "mode": "link",
+        "links": [
+            "22fddd82895cbadf"
+        ],
+        "x": 655,
+        "y": 340,
+        "wires": []
+    }
+]
