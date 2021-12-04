@@ -20,4 +20,8 @@
 # Verification
   The flow combines an HTTP endpoint node with a change node and an HTTP Response node to complete the Hypertext transaction. The default "Spin OK!" text from the change node will be the data returned from Node-RED to the Spinitron.com metadata channel.  If the Spinitron.com metadata channel successfully delivers the HTTP Post data to the endpoint, the Spinitron.com metadata push logs will show a timestamp along with a "200" response code and an "OK" status.
   
-  
+# Output
+  Once a message is received from Spinitron.com, the flow will process the data to create an output message.  
+  * If the spin data is not expired, **\"Title\" by \"Artist\"** will be send as the payload and a timer is started to wait for the expiration time to pass. The message is then re-sent though the message stack on expiration. A new message will reset the resend timer. 
+  * If the spin data is expired or an expired resend, the Program timing is checked to see if the program is within it's secheduled time. If so, **\"Program Name\" with \"Host Name\"** is sent as the payload output and a timer is set to resend the message at the expiriation of the Program. A new message cancels this timer.
+  * If the spin and program data are expired, a message is sent with **\"Station Name\"** as the payload.
